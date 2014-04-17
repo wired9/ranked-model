@@ -222,6 +222,18 @@ module RankedModel
             _finder = _finder.send ranker.scope
           end
           case ranker.with_same
+            when String
+              foreign_column, foreign_table = ranker.with_same.split('.').reverse
+              if foreign_table
+                table = Arel::Table.new(foreign_table)
+                columns << table[foreign_column]
+                _finder = _finder.where \
+                  table[foreign_column].eq(instance.attributes["#{foreign_column}"])
+              else
+                columns << instance_class.arel_table[ranker.with_same]
+                _finder = _finder.where \
+                  instance_class.arel_table[ranker.with_same].eq(instance.attributes["#{ranker.with_same}"])
+              end
             when Symbol
               columns << instance_class.arel_table[ranker.with_same]
               _finder = _finder.where \
